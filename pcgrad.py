@@ -43,7 +43,7 @@ class PCGrad():
                 g_i_g_j = torch.dot(g_i, g_j)
                 if g_i_g_j < 0:
                     g_i -= (g_i_g_j) * g_j / (g_j.norm()**2)
-        pc_grad = torch.cat([g.unsqueeze(0) for g in pc_grad]).sum(dim=0)
+        pc_grad = torch.stack(pc_grad).mean(dim=0)
         return pc_grad
 
     def _set_grad(self, grads):
@@ -69,7 +69,7 @@ class PCGrad():
         unflatten_grad, idx = [], 0
         for shape in shapes:
             length = np.prod(shape)
-            unflatten_grad.append(grads[idx:idx + length].view(shape))
+            unflatten_grad.append(grads[idx:idx + length].view(shape).clone())
             idx += length
         return unflatten_grad
 
@@ -112,6 +112,6 @@ if __name__ == '__main__':
     pc_adam = PCGrad(optim.Adam(net.parameters()))
     pc_adam.zero_grad()
     loss1_fn, loss2_fn = nn.L1Loss(), nn.MSELoss()
-    loss1, loss2 = loss1_fn(y_pred, y), loss2_fn(y_pred, y)
+    loss1, loss2 = loss1_fn(y_pred, y), loss2_fn(y_pred, y) 
 
     pc_adam.pc_backward([loss1, loss2])
