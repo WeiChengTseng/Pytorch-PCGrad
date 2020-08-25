@@ -29,11 +29,12 @@ Please cite as:
   author={Yu, Tianhe and Kumar, Saurabh and Gupta, Abhishek and Levine, Sergey and Hausman, Karol and Finn, Chelsea},
   journal={arXiv preprint arXiv:2001.06782},
   year={2020}
+}
+
 @misc{Pytorch-PCGrad,
   author = {Wei-Cheng Tseng},
   title = {WeiChengTseng/Pytorch-PCGrad},
   url = {https://github.com/WeiChengTseng/Pytorch-PCGrad.git},
   year = {2020}
-}
 }
 ```
