@@ -2,6 +2,11 @@
 
 This repository provide code of reimplementation for [Gradient Surgery for Multi-Task Learning](https://arxiv.org/pdf/2001.06782.pdf) in PyTorch 1.6.0.
 
+## Setup
+Install the required packages via:
+```
+pip install -r requirements.txt
+```
 
 ## Usage
 
