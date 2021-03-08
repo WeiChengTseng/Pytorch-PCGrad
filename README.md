@@ -37,6 +37,8 @@ optimizer.step()  # apply gradient step
   | **PCGrad (this repo.)** |  **95.00** |   **92.00** |
   | PCGrad (official)       |      96.58 |       95.50 |
 
+- Cifar100-MTL
+  coming soon 
 ## Reference
 
 Please cite as:
