@@ -17,7 +17,7 @@ class MultiLeNetR(nn.Module):
         if mask is None:
             mask = Variable(
                 torch.bernoulli(torch.ones(1, channel_size, 1, 1) *
-                                0.5).cuda())
+                                0.5).to(x.device))
         mask = mask.expand(x.shape)
         return mask
 

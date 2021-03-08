@@ -3,14 +3,16 @@ import torchvision
 import torch.nn as nn
 import torch.nn.functional as F
 import pdb
+import numpy as np
 from torchvision import transforms
 from data.multi_minist import MultiMNIST
 from net.lenet import MultiLeNetR, MultiLeNetO
 from pcgrad import PCGrad
+from utils import create_logger
 
 # ------------------ CHANGE THE CONFIGURATION -------------
 PATH = './dataset'
-LR = 0.001
+LR = 0.0005
 BATCH_SIZE = 256
 NUM_EPOCHS = 100
 TASKS = ['R', 'L']
@@ -18,26 +20,9 @@ DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 # ---------------------------------------------------------
 
 
-def accuracy(logits, gt):
-    # pdb.set_trace()
-    return ((logits.argmax(dim=-1) == gt).float()).mean()
-
-def get_model(params=None):
-    model = {
-        'rep': MultiLeNetR().to(DEVICE),
-        'L': MultiLeNetO().to(DEVICE),
-        'R': MultiLeNetO().to(DEVICE)
-    }
-    # if 'L' in params['tasks']:
-    #     model['L'] = MultiLeNetO()
-    #     model['L'].cuda()
-    # if 'R' in params['tasks']:
-    #     model['R'] = MultiLeNetO()
-    #     model['R'].cuda()
-    return model
-
-
+accuracy = lambda logits, gt: ((logits.argmax(dim=-1) == gt).float()).mean()
 to_dev = lambda inp, dev: [x.to(dev) for x in inp]
+logger = create_logger('Main')
 
 global_transformer = transforms.Compose(
     [transforms.ToTensor(),
@@ -61,7 +46,7 @@ val_dst = MultiMNIST(PATH,
 val_loader = torch.utils.data.DataLoader(val_dst,
                                          batch_size=100,
                                          shuffle=True,
-                                         num_workers=4)
+                                         num_workers=1)
 nets = {
     'rep': MultiLeNetR().to(DEVICE),
     'L': MultiLeNetO().to(DEVICE),
@@ -69,9 +54,6 @@ nets = {
 }
 param = [p for v in nets.values() for p in list(v.parameters())]
 optimizer = torch.optim.Adam(param, lr=LR)
-# optimizer = torch.optim.Adam({k: v.parameters()
-#                               for k, v in nets.items()},
-#                              lr=LR)
 optimizer = PCGrad(optimizer)
 
 for ep in range(NUM_EPOCHS):
@@ -85,11 +67,12 @@ for ep in range(NUM_EPOCHS):
         out_l, mask_l = nets['L'](rep, None)
         out_r, mask_r = nets['R'](rep, None)
 
-        # pdb.set_trace()
         losses = [F.nll_loss(out_l, label_l), F.nll_loss(out_r, label_r)]
         optimizer.pc_backward(losses)
+        # sum(losses).backward()
         optimizer.step()
 
+    losses, acc = [], []
     for net in nets.values():
         net.eval()
     for batch in val_loader:
@@ -99,13 +82,16 @@ for ep in range(NUM_EPOCHS):
         out_l, mask_l = nets['L'](rep, None)
         out_r, mask_r = nets['R'](rep, None)
 
-        losses = [
+        losses.append([
             F.nll_loss(out_l, label_l).item(),
             F.nll_loss(out_r, label_r).item()
-        ]
-        acc = [
-            accuracy(out_l, label_l).item(),
-            accuracy(out_r, label_r).item()
-        ]
-    print(losses)
-    print(acc)
+        ])
+        acc.append(
+            [accuracy(out_l, label_l).item(),
+             accuracy(out_r, label_r).item()])
+    losses, acc = np.array(losses), np.array(acc)
+    logger.info('epoches {}/{}: loss (left, right) = {:5.4f}, {:5.4f}'.format(
+        ep, NUM_EPOCHS, losses[:,0].mean(), losses[:,1].mean()))
+    logger.info(
+        'epoches {}/{}: accuracy (left, right) = {:5.3f}, {:5.3f}'.format(
+            ep, NUM_EPOCHS, acc[:,0].mean(), acc[:,1].mean()))
