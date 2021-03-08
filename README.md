@@ -25,10 +25,10 @@ optimizer.step()  # apply gradient step
 ```
 
 ## Training
-- Mulit-MINIST 
+- Mulit-MNIST 
   Please run the training script via the following command. Part of implementation is leveraged from https://github.com/intel-isl/MultiObjectiveOptimization
   ```
-  python main_multi_minist.py
+  python main_multi_mnist.py
   ```
   The result is shown below.
   | Method                  | left-digit | right-digit |
