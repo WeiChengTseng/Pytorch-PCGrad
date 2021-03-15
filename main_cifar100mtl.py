@@ -5,6 +5,7 @@ import numpy as np
 import pdb
 import os
 
+from pcgrad import PCGrad
 from data.cifar100mtl import CIFAR100MTL
 from net.cifat100 import Net
 
@@ -17,12 +18,15 @@ TASKS = []
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 # ---------------------------------------------------------
 
-net = Net()
+net = Net().to(DEVICE)
 dataset = CIFAR100MTL(
     10,
     data_files=[os.path.join(PATH, 'train'),
                 os.path.join(PATH, 'test')],
     cuda=torch.cuda.is_available())
+
+optimizer = torch.optim.Adam(net.parameters(), lr=LR)
+optimizer = PCGrad(optimizer)
 
 for ep in range(NUM_EPOCHS):
     dataset.enter_train_mode()

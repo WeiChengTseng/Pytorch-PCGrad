@@ -1,4 +1,3 @@
-
 import abc
 import random
 import pickle
@@ -27,15 +26,12 @@ class Dataset(object, metaclass=abc.ABCMeta):
     def _batched_iter(self, dataset, batch_size):
         for i in range(0, len(dataset), batch_size):
             batch = dataset[i:i + batch_size]
-            samples = Variable(
-                torch.stack([torch.FloatTensor(sample[0]) for sample in batch],
-                            0))
-            targets = Variable(
-                torch.stack(
-                    [torch.LongTensor([sample[1]]) for sample in batch], 0))
+            samples = (torch.stack(
+                [torch.FloatTensor(sample[0]) for sample in batch], 0))
+            targets = (torch.stack(
+                [torch.LongTensor([sample[1]]) for sample in batch], 0))
             if self._cuda:
-                samples = samples.cuda()
-                targets = targets.cuda()
+                samples, targets = samples.cuda(), targets.cuda()
             tasks = [sample[2] for sample in batch]
             yield samples, targets, tasks
 
@@ -54,10 +50,12 @@ class CIFAR100MTL(Dataset):
     def __init__(self, *args, **kwargs):
         Dataset.__init__(self, *args, **kwargs)
         self.num_tasks = 20
+        return
 
     def _get_datasets(self):
         datasets = []
-        for fn in self._data_files:  # assuming that the datafiles are [train_file_name, test_file_name]
+        for fn in self._data_files:
+            # assuming that the datafiles are [train_file_name, test_file_name]
             samples, labels, tasks = [], [], []
             with open(fn, 'rb') as f:
                 data_dict = pickle.load(f, encoding='latin1')
