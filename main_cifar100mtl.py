@@ -37,6 +37,9 @@ for ep in range(NUM_EPOCHS):
             batch = dataset.get_batch()
         except StopIteration:
             break
+        pdb.set_trace()
+
+        
         train_samples_seen += len(batch[0])
         pbar.update(len(batch[0]))
         module_loss, decision_loss, accuracy = compute_batch(net, batch)

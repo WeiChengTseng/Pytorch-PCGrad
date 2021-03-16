@@ -13,6 +13,6 @@ class Net(nn.Module):
                                   nn.Linear(300, 100))
         return
 
-    def forward(self, img):
+    def forward(self, img, task):
         self._net(img)
         return self._net(img)

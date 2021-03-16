@@ -55,4 +55,12 @@ Please cite as:
   url = {https://github.com/WeiChengTseng/Pytorch-PCGrad.git},
   year = {2020}
 }
+
+@inproceedings{liu2019end,
+  title={End-to-End Multi-task Learning with Attention},
+  author={Liu, Shikun and Johns, Edward and Davison, Andrew J},
+  booktitle={Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition},
+  pages={1871--1880},
+  year={2019}
+}
 ```
