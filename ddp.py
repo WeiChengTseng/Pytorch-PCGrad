@@ -1,7 +1,11 @@
+import os
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+import torch.distributed as dist
+import torch.multiprocessing as mp
+from torch.nn.parallel import DistributedDataParallel as DDP
 from pcgrad import PCGrad
 
 
@@ -26,34 +30,30 @@ class MultiHeadTestNet(nn.Module):
         return self._head1(feat), self._head2(feat)
 
 
+def example(rank, world_size):
+    os.environ['MASTER_ADDR'] = 'localhost'
+    os.environ['MASTER_PORT'] = '12355'
+    dist.init_process_group("gloo", rank=rank, world_size=world_size)
+    model = TestNet().to(rank)
+    # model = nn.Linear(3, 4).to(rank)
+    ddp_model = DDP(model, device_ids=[rank])
+    loss1_fn, loss2_fn = nn.L1Loss(), nn.MSELoss()
+    optimizer = PCGrad(optim.SGD(ddp_model.parameters(), lr=0.001))
+
+    outputs = ddp_model(torch.randn(2, 3).to(rank))
+    labels = torch.randn(2, 4).to(rank)
+
+    loss1, loss2 = loss1_fn(outputs, labels), loss2_fn(outputs, labels)
+    losses =  [loss1, loss2]
+    optimizer.pc_backward(losses)
+    optimizer.step()
+
+
+
 if __name__ == '__main__':
 
     # fully shared network test
     torch.manual_seed(4)
-    x, y = torch.randn(2, 3), torch.randn(2, 4)
-    net = TestNet()
-    y_pred = net(x)
-    pc_adam = PCGrad(optim.Adam(net.parameters()))
-    pc_adam.zero_grad()
-    loss1_fn, loss2_fn = nn.L1Loss(), nn.MSELoss()
-    loss1, loss2 = loss1_fn(y_pred, y), loss2_fn(y_pred, y)
 
-    pc_adam.pc_backward([loss1, loss2])
-    for p in net.parameters():
-        print(p.grad)
-
-    print('-' * 80)
-    # seperated shared network test
-
-    torch.manual_seed(4)
-    x, y = torch.randn(2, 3), torch.randn(2, 4)
-    net = MultiHeadTestNet()
-    y_pred_1, y_pred_2 = net(x)
-    pc_adam = PCGrad(optim.Adam(net.parameters()))
-    pc_adam.zero_grad()
-    loss1_fn, loss2_fn = nn.MSELoss(), nn.MSELoss()
-    loss1, loss2 = loss1_fn(y_pred_1, y), loss2_fn(y_pred_2, y)
-
-    pc_adam.pc_backward([loss1, loss2])
-    for p in net.parameters():
-        print(p.grad)
+    world_size = 2
+    mp.spawn(example, args=(world_size, ), nprocs=world_size, join=True)
