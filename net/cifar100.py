@@ -19,7 +19,6 @@ class SimpleConvNetBlock(nn.Module):
         self.maxpool = nn.MaxPool2d(2)
 
     def forward(self, x):
-
         return self.maxpool(self.relu(self.conv(x)))
         # y = self.conv(x)
         # y = self.relu(y)
