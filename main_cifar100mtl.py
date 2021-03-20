@@ -9,6 +9,8 @@ import tqdm
 from pcgrad import PCGrad
 from data.cifar100mtl import CIFAR100MTL
 from net.cifar100 import RoutedAllFC
+from net.routing_net.rl import WPL
+from utils import create_logger
 
 
 def compute_batch(model, batch):
@@ -38,20 +40,26 @@ TASKS = []
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 # ---------------------------------------------------------
 
+
+logger = create_logger('Main')
+
 dataset = CIFAR100MTL(
     10,
     data_files=[os.path.join(PATH, 'train'),
                 os.path.join(PATH, 'test')],
     cuda=torch.cuda.is_available())
-model = RoutedAllFC(WPL, 3, 128, 5, dataset.num_tasks, dataset.num_tasks)
+model = RoutedAllFC(WPL, 3, 640, 5, dataset.num_tasks,
+                    dataset.num_tasks).to(DEVICE)
+# model = RoutedAllFC(WPL, 3, 128, 5, dataset.num_tasks,
+#                     dataset.num_tasks).to(DEVICE)
 
 learning_rates = {0: 3e-3, 5: 1e-3, 10: 3e-4}
 routing_module_learning_rate_ratio = 0.3
 
-optimizer = torch.optim.Adam(model.parameters(), lr=LR)
-optimizer = PCGrad(optimizer)
+# optimizer = torch.optim.Adam(model.parameters(), lr=LR)
+# optimizer = PCGrad(optimizer)
 
-print('Loaded dataset and constructed model. Starting Training ...')
+logger.info('Loaded dataset and constructed model. Starting Training ...')
 for epoch in range(NUM_EPOCHS):
     optimizers = []
     parameters = []

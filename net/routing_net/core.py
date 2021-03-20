@@ -61,8 +61,10 @@ class Selection(nn.Module):
             self.__output_dim = self._submodules[0](
                 xs[0].unsqueeze(0)).shape[1:]
         # initializing the "termination" mask
-        mask = torch.ones(batch_size, dtype=torch.uint8, device=xs.device) \
+        mask = torch.ones(batch_size, dtype=torch.bool, device=xs.device) \
             if mask is None else mask
+        # mask = torch.ones(batch_size, dtype=torch.uint8, device=xs.device) \
+        #     if mask is None else mask
         # parallelizing this loop does not work. however, we can split the batch by the actions
         # creating the target variable
         ys = torch.zeros((batch_size, *self.__output_dim),
@@ -158,8 +160,12 @@ class Loss(nn.Module, metaclass=abc.ABCMeta):
                 rl_loss_tuple_map[lf]['indices'].append(traj_counter)
                 rl_loss_tuple_map[lf]['is_terminal'].append(
                     torch.tensor([is_terminal],
-                                 dtype=torch.uint8,
+                                 dtype=torch.bool,
                                  device=device))
+                # rl_loss_tuple_map[lf]['is_terminal'].append(
+                #     torch.tensor([is_terminal],
+                #                  dtype=torch.uint8,
+                #                  device=device))
                 rl_loss_tuple_map[lf]['states'].append(s)
                 rl_loss_tuple_map[lf]['actions'].append(a.view(-1))
                 rl_loss_tuple_map[lf]['rewards'].append(rew.view(-1))

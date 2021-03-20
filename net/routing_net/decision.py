@@ -163,7 +163,9 @@ class Decision(nn.Module, metaclass=abc.ABCMeta):
         assert mask is None or mask.max() == 1, \
             'Please check that a batch being passed in has at least one active (non terminated) trajectory.'
         # computing the termination mask and the prior actions if not passed in
-        mask = torch.ones(batch_size, dtype=torch.uint8, device=xs.device) \
+        # mask = torch.ones(batch_size, dtype=torch.uint8, device=xs.device) \
+        #     if mask is None else mask
+        mask = torch.ones(batch_size, dtype=torch.bool, device=xs.device) \
             if mask is None else mask
         prior_actions = torch.zeros(batch_size, dtype=torch.long, device=xs.device) \
             if prior_actions is None or len(prior_actions) == 0 else prior_actions.reshape(-1)
@@ -172,6 +174,7 @@ class Decision(nn.Module, metaclass=abc.ABCMeta):
         # initializing the return vars
         actions = torch.zeros(batch_size, dtype=torch.long, device=xs.device)
         are_exp = torch.zeros(batch_size, dtype=torch.uint8, device=xs.device)
+        # are_exp = torch.zeros(batch_size, dtype=torch.long, device=xs.device)
         dists = torch.zeros((batch_size, self._num_selections, 5),
                             device=xs.device)
         # "clustering" by agent
