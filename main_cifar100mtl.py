@@ -61,8 +61,7 @@ routing_module_learning_rate_ratio = 0.3
 
 logger.info('Loaded dataset and constructed model. Starting Training ...')
 for epoch in range(NUM_EPOCHS):
-    optimizers = []
-    parameters = []
+    optimizers, parameters = [], []
     if epoch in learning_rates:
         try:
             optimizers.append(
