@@ -9,8 +9,8 @@ import random
 
 
 class PCGrad():
-    def __init__(self, optimizer):
-        self._optim = optimizer
+    def __init__(self, optimizer, reduction='mean'):
+        self._optim, self._reduction = optimizer, reduction
         return
 
     @property
@@ -55,8 +55,14 @@ class PCGrad():
                 if g_i_g_j < 0:
                     g_i -= (g_i_g_j) * g_j / (g_j.norm()**2)
         merged_grad = torch.zeros_like(grads[0]).to(grads[0].device)
-        merged_grad[shared] = torch.stack([g[shared]
+        if self._reduction:
+            merged_grad[shared] = torch.stack([g[shared]
                                            for g in pc_grad]).mean(dim=0)
+        elif self._reduction == 'sum':
+            merged_grad[shared] = torch.stack([g[shared]
+                                           for g in pc_grad]).sum(dim=0)
+        else: exit('invalid reduction method')
+
         merged_grad[~shared] = torch.stack([g[~shared]
                                             for g in pc_grad]).sum(dim=0)
         return merged_grad
@@ -185,3 +191,4 @@ if __name__ == '__main__':
     pc_adam.pc_backward([loss1, loss2])
     for p in net.parameters():
         print(p.grad)
+
